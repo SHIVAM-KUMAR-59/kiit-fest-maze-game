@@ -8,7 +8,10 @@ export async function POST(req: Request) {
     //  Check empty fields
     if (!name || !email) {
       return NextResponse.json(
-        { message: "Name and Email required" },
+        { 
+          success: false,
+          message: "Name and Email required" 
+        },
         { status: 400 }
       );
     }
@@ -18,7 +21,10 @@ export async function POST(req: Request) {
 
     if (!kiitEmailRegex.test(email)) {
       return NextResponse.json(
-        { message: "Only KIIT email allowed" },
+        { 
+          success: false,
+          message: "Only KIIT email allowed"
+        },
         { status: 400 }
       );
     }
@@ -30,7 +36,10 @@ export async function POST(req: Request) {
 
     if (existingUser) {
       return NextResponse.json(
-        { message: "User already registered" },
+        { 
+          success: false,
+          message: "User already registered" 
+        },
         { status: 409 }
       );
     }
@@ -44,14 +53,21 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(
-      { message: "Registration successful", user },
+      { 
+        success: true,
+        message: "Registration successful",
+        data:user, 
+      },
       { status: 201 }
     );
 
   } catch (error) {
     console.error(error);
     return NextResponse.json(
-      { message: "Server error" },
+      { 
+        success: false, 
+        message: "Server error" 
+      },
       { status: 500 }
     );
   }
