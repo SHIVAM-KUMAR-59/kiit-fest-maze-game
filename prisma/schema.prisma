@@ -8,28 +8,48 @@ datasource db {
 }
 
 model User {
-  id        String      @id @default(uuid())
+  id        String        @id @default(uuid())
   name      String
-  email     String      @unique
-  kfid      String      @unique
-  createdAt DateTime    @default(now())
+  email     String        @unique
+  kfid      String        @unique
+  createdAt DateTime      @default(now())
 
+  sessions  GameSession[]
   scores    GameScore[]
 
   @@index([email])
   @@index([kfid])
 }
 
-model GameScore {
-  id         String   @id @default(uuid())
+model GameSession {
+  id         String      @id @default(uuid())
   userId     String
   level      Int
   gridSize   Int
-  timeTaken  Int      // in seconds
-  points     Int
-  createdAt  DateTime @default(now())
+  timeLimit  Int
+  bombs      Int
+  startedAt  DateTime    @default(now())
+  completed  Boolean     @default(false)
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  score      GameScore?
+
+  @@index([userId])
+  @@index([startedAt])
+}
+
+model GameScore {
+  id            String      @id @default(uuid())
+  userId        String
+  sessionId     String      @unique
+  level         Int
+  gridSize      Int
+  timeTaken     Int
+  points        Int
+  createdAt     DateTime    @default(now())
+
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session       GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([points])
