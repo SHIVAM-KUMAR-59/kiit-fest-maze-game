@@ -1,29 +1,56 @@
 "use client";
 
+import Image from "next/image";
+import { Bomb, Trophy, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { LevelResult } from "@/hooks/use-maze-game";
 
 interface DeathScreenProps {
+  reason: "bomb" | "timeout";
   totalScore: number;
   results: LevelResult[];
   onFinish: () => void;
 }
 
 export function DeathScreen({
+  reason,
   totalScore,
   results,
   onFinish,
 }: Readonly<DeathScreenProps>) {
-  return (
-    <div className="flex w-full max-w-3xl flex-col items-center gap-8">
-      <div className="w-full max-w-2xl rounded-4xl border border-destructive/40 bg-card px-5 py-8 text-center animate-win-pop sm:px-8 sm:py-10">
-        <span className="mb-2 block text-5xl sm:text-6xl">💥</span>
+  const isBomb = reason === "bomb";
 
-        <h2 className="font-bebas mb-2 text-4xl tracking-widest text-destructive sm:text-5xl">
-          Bomb Hit!
+  return (
+    <div className="flex w-full max-w-3xl flex-col items-center gap-6">
+      <div
+        className={`w-full max-w-2xl rounded-4xl border bg-card px-5 py-8 text-center animate-win-pop sm:px-8 sm:py-10 ${
+          isBomb ? "border-destructive/40" : "border-chart-4/40"
+        }`}
+      >
+        <div className="mb-2 flex justify-center">
+          {isBomb ?
+            <Bomb
+              className="size-14 text-destructive sm:size-16"
+              strokeWidth={1.5}
+            />
+          : <Clock
+              className="size-14 text-chart-4 sm:size-16"
+              strokeWidth={1.5}
+            />
+          }
+        </div>
+
+        <h2
+          className={`font-bebas mb-2 text-4xl tracking-widest sm:text-5xl ${
+            isBomb ? "text-destructive" : "text-chart-4"
+          }`}
+        >
+          {isBomb ? "Bomb Hit!" : "Time\u2019s Up!"}
         </h2>
         <p className="font-marker mb-6 text-sm tracking-widest text-muted-foreground">
-          You stepped on a bomb. Game over!
+          {isBomb ?
+            "You stepped on a bomb. Game over!"
+          : "You ran out of time. Better luck next time!"}
         </p>
 
         {results.length > 0 && (
@@ -54,10 +81,22 @@ export function DeathScreen({
           </span>
         </div>
 
-        <Button onClick={onFinish} className="font-bold tracking-wide">
-          View Leaderboard 🏆
+        <Button
+          onClick={onFinish}
+          className="inline-flex items-center gap-2 font-bold tracking-wide"
+        >
+          <Trophy className="size-4" /> View Leaderboard
         </Button>
       </div>
+
+      {/* Wordmark footer */}
+      <Image
+        src="/kiitfest-wordmark.png"
+        alt="KIIT Fest"
+        width={160}
+        height={32}
+        className="w-32 object-contain opacity-40"
+      />
     </div>
   );
 }

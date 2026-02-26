@@ -31,6 +31,7 @@ export interface UseMazeGameReturn {
   totalScore: number;
   results: LevelResult[];
   currentLevel: number;
+  deathReason: "bomb" | "timeout";
   startGame: () => void;
   nextLevel: () => void;
   move: (dir: Direction) => void;
@@ -46,6 +47,7 @@ export function useMazeGame(): UseMazeGameReturn {
   const [stars, setStars] = useState<Star[]>([]);
   const [totalScore, setTotalScore] = useState(0);
   const [results, setResults] = useState<LevelResult[]>([]);
+  const [deathReason, setDeathReason] = useState<"bomb" | "timeout">("bomb");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const levelCfg = LEVELS[currentLevel] ?? LEVELS[0];
@@ -66,6 +68,7 @@ export function useMazeGame(): UseMazeGameReturn {
   // ── Time-limit enforcement ─────────────────────────────────────────────────
   useEffect(() => {
     if (screen === "game" && time >= levelCfg.timeLimit) {
+      setDeathReason("timeout");
       setScreen("dead");
     }
   }, [time, screen, levelCfg.timeLimit]);
@@ -81,6 +84,7 @@ export function useMazeGame(): UseMazeGameReturn {
     setStars([]);
     setTotalScore(0);
     setResults([]);
+    setDeathReason("bomb");
     setScreen("game");
   }, []);
 
@@ -103,60 +107,59 @@ export function useMazeGame(): UseMazeGameReturn {
     (dir: Direction) => {
       if (!maze || screen !== "game") return;
 
-      setPlayer((prev) => {
-        const { r, c } = prev;
-        let dr = 0;
-        let dc = 0;
-        if (dir === "up") dr = -1;
-        if (dir === "down") dr = 1;
-        if (dir === "left") dc = -1;
-        if (dir === "right") dc = 1;
+      // Read current position directly — avoids side effects inside setState
+      const { r, c } = player;
+      let dr = 0;
+      let dc = 0;
+      if (dir === "up") dr = -1;
+      if (dir === "down") dr = 1;
+      if (dir === "left") dc = -1;
+      if (dir === "right") dc = 1;
 
-        // In the block grid, the connector cell between logical (r,c) and
-        // (r+dr, c+dc) sits at block index (2r+1+dr, 2c+1+dc).
-        const connR = 2 * r + 1 + dr;
-        const connC = 2 * c + 1 + dc;
-        if (maze[connR]?.[connC]?.isWall !== false) return prev; // blocked
+      // In the block grid, the connector cell between logical (r,c) and
+      // (r+dr, c+dc) sits at block index (2r+1+dr, 2c+1+dc).
+      const connR = 2 * r + 1 + dr;
+      const connC = 2 * c + 1 + dc;
+      if (maze[connR]?.[connC]?.isWall !== false) return; // blocked
 
-        const nr = r + dr;
-        const nc = c + dc;
+      const nr = r + dr;
+      const nc = c + dc;
+      const newMoves = moves + 1;
 
-        const newMoves = moves + 1;
-        setMoves(newMoves);
+      setPlayer({ r: nr, c: nc });
+      setMoves(newMoves);
 
-        // Check bomb at the logical destination cell
-        if (maze[2 * nr + 1][2 * nc + 1].hasBomb) {
-          setTimeout(() => {
-            setScreen("dead");
-          }, 80);
-          return { r: nr, c: nc };
-        }
+      // Check bomb at the logical destination cell
+      if (maze[2 * nr + 1][2 * nc + 1].hasBomb) {
+        setTimeout(() => {
+          setDeathReason("bomb");
+          setScreen("dead");
+        }, 80);
+        return;
+      }
 
-        // Check win condition
-        if (nr === levelCfg.rows - 1 && nc === levelCfg.cols - 1) {
-          setTimeout(() => {
-            const s = calcStars(newMoves, time + 1, levelCfg.level);
-            const score = calcScore(levelCfg.level, time + 1, newMoves);
-            setStars(s);
-            setTotalScore((prev) => prev + score);
-            setResults((prev) => [
-              ...prev,
-              {
-                level: levelCfg.level,
-                time: time + 1,
-                moves: newMoves,
-                score,
-                stars: s,
-              },
-            ]);
-            setScreen("win");
-          }, 100);
-        }
-
-        return { r: nr, c: nc };
-      });
+      // Check win condition
+      if (nr === levelCfg.rows - 1 && nc === levelCfg.cols - 1) {
+        const s = calcStars(newMoves, time + 1, levelCfg.level);
+        const score = calcScore(levelCfg.level, time + 1, newMoves);
+        setTimeout(() => {
+          setStars(s);
+          setTotalScore((prev) => prev + score);
+          setResults((prev) => [
+            ...prev,
+            {
+              level: levelCfg.level,
+              time: time + 1,
+              moves: newMoves,
+              score,
+              stars: s,
+            },
+          ]);
+          setScreen("win");
+        }, 100);
+      }
     },
-    [maze, screen, levelCfg, moves, time],
+    [maze, screen, player, levelCfg, moves, time],
   );
 
   return {
@@ -170,6 +173,7 @@ export function useMazeGame(): UseMazeGameReturn {
     totalScore,
     results,
     currentLevel,
+    deathReason,
     startGame,
     nextLevel,
     move,

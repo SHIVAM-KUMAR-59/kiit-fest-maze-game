@@ -1,5 +1,6 @@
 "use client";
 
+import { Timer, Footprints } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { LevelConfig } from "@/types/maze";
 import { formatTime } from "@/lib/constants";
@@ -27,20 +28,20 @@ export function Hud({ levelCfg, time, moves }: Readonly<HudProps>) {
       <Badge
         variant="outline"
         className={cn(
-          "font-marker rounded-full px-3.5 py-1.5 text-xs tracking-widest",
+          "font-marker inline-flex items-center gap-1 rounded-full px-3.5 py-1.5 text-xs tracking-widest",
           isUrgent ?
             "border-destructive bg-destructive/20 text-destructive animate-pulse"
           : isWarning ? "border-chart-4 bg-chart-4/15 text-chart-4"
           : "border-border bg-card/70 text-foreground",
         )}
       >
-        ⏱ {formatTime(timeLeft)}
+        <Timer className="size-3" /> {formatTime(timeLeft)}
       </Badge>
       <Badge
         variant="outline"
-        className="font-marker rounded-full border-border bg-card/70 px-3.5 py-1.5 text-xs tracking-widest text-foreground"
+        className="font-marker inline-flex items-center gap-1 rounded-full border-border bg-card/70 px-3.5 py-1.5 text-xs tracking-widest text-foreground"
       >
-        👣 {moves}
+        <Footprints className="size-3" /> {moves}
       </Badge>
     </div>
   );

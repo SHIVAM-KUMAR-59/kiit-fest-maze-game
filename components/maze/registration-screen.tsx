@@ -8,6 +8,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import { Timer } from "lucide-react";
 import { useState } from "react";
 
 interface RegistrationScreenProps {
@@ -27,7 +28,6 @@ export function RegistrationScreen({
   return (
     <Card className="w-full max-w-lg border-border bg-card/90 shadow-sm animate-screen-fade">
       <CardHeader className="space-y-3 text-center">
-        <span className="text-4xl">🧭</span>
         <CardTitle className="font-bebas text-4xl tracking-widest sm:text-5xl">
           Maze Challenge
         </CardTitle>

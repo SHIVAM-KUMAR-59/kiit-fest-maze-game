@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Space_Grotesk, Permanent_Marker } from "next/font/google";
 import "./globals.css";
+import { Footer } from "@/components/maze/footer";
 
 const bebasNeue = Bebas_Neue({
   weight: "400",
@@ -32,9 +33,11 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
       <body
-        className={`${spaceGrotesk.variable} ${bebasNeue.variable} ${permanentMarker.variable} font-sans antialiased`}
+        className={`${spaceGrotesk.variable} ${bebasNeue.variable} ${permanentMarker.variable} flex min-h-screen flex-col font-sans antialiased`}
+        suppressHydrationWarning
       >
-        {children}
+        <main className="flex flex-1 flex-col">{children}</main>
+        <Footer />
       </body>
     </html>
   );

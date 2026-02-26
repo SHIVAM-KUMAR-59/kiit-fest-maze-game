@@ -1,5 +1,6 @@
 "use client";
 
+import { Bomb, Flag } from "lucide-react";
 import type {
   MazeGrid as MazeGridType,
   Position,
@@ -36,6 +37,8 @@ export function MazeGrid({ maze, player, levelCfg }: Readonly<MazeGridProps>) {
     );
   };
 
+  const iconSize = Math.max(10, Math.floor(bs * 0.6));
+
   return (
     <div className="max-w-full overflow-auto rounded-2xl border border-border bg-background p-3 shadow-sm animate-maze-in sm:p-4">
       <div
@@ -53,11 +56,16 @@ export function MazeGrid({ maze, player, levelCfg }: Readonly<MazeGridProps>) {
               <div
                 key={`${br}-${bc}`}
                 className={cn(
-                  "absolute transition-colors duration-200",
+                  "absolute flex items-center justify-center transition-colors duration-200",
                   !visible && "bg-muted/90",
                   visible && cell.isWall && "bg-muted rounded-[2px]",
                   visible && !cell.isWall && isEnd && "bg-secondary/20",
-                  visible && !cell.isWall && !isEnd && "bg-background",
+                  visible && !cell.isWall && isBomb && "bg-destructive/20",
+                  visible &&
+                    !cell.isWall &&
+                    !isEnd &&
+                    !isBomb &&
+                    "bg-background",
                 )}
                 style={{
                   left: bc * bs,
@@ -67,24 +75,22 @@ export function MazeGrid({ maze, player, levelCfg }: Readonly<MazeGridProps>) {
                 }}
               >
                 {isEnd && visible && (
-                  <span
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 leading-none animate-pulse"
-                    style={{ fontSize: bs * 0.7 }}
-                  >
-                    🏁
-                  </span>
+                  <Flag
+                    style={{ width: iconSize, height: iconSize }}
+                    className="text-secondary animate-pulse"
+                    strokeWidth={2}
+                  />
                 )}
                 {isBomb && (
-                  <span
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 leading-none"
-                    style={{ fontSize: bs * 0.65 }}
-                  >
-                    💣
-                  </span>
+                  <Bomb
+                    style={{ width: iconSize, height: iconSize }}
+                    className="text-destructive"
+                    strokeWidth={2}
+                  />
                 )}
                 {isPlayerCell && (
                   <div
-                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-primary/40 animate-player-pulse"
+                    className="rounded-full bg-primary ring-2 ring-primary/40 animate-player-pulse"
                     style={{ width: bs * 0.65, height: bs * 0.65 }}
                   />
                 )}

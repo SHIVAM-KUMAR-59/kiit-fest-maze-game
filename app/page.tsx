@@ -9,13 +9,13 @@ import { savePlayer, loadPlayer } from "@/lib/player-store";
 export default function RegisterPage() {
   const router = useRouter();
 
-  // If already registered, skip straight to game
+  // If already registered, skip straight to rules
   useEffect(() => {
-    if (loadPlayer()) router.replace("/game");
+    if (loadPlayer()) router.replace("/rules");
   }, [router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-3 sm:p-4">
+    <div className="flex flex-1 items-center justify-center bg-background px-4 py-8 sm:px-6">
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -25,7 +25,7 @@ export default function RegisterPage() {
         <RegistrationScreen
           onContinue={(name, email, kfid) => {
             savePlayer({ name, email, kfid });
-            router.push("/game");
+            router.push("/rules");
           }}
         />
       </motion.div>

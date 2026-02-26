@@ -9,12 +9,23 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
+import { Bomb, Clock } from "lucide-react";
 import { useMazeGame } from "@/hooks/use-maze-game";
 import { GameScreen } from "@/components/maze/game-screen";
 import { WinScreen } from "@/components/maze/win-screen";
 import { DeathScreen } from "@/components/maze/death-screen";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/components/ui/alert-dialog";
 import { loadPlayer } from "@/lib/player-store";
-import { LEVELS, calcScore } from "@/lib/constants";
+import { LEVELS } from "@/lib/constants";
 import type { Direction } from "@/types/maze";
 
 const KEY_MAP: Record<string, Direction> = {
@@ -38,6 +49,9 @@ const slide = {
 export default function GamePage() {
   const router = useRouter();
   const [ready, setReady] = useState(false);
+  const [deathAlertOpen, setDeathAlertOpen] = useState(false);
+  const [showDeathScreen, setShowDeathScreen] = useState(false);
+  const prevScreen = useRef<string>("");
 
   const {
     screen,
@@ -50,6 +64,7 @@ export default function GamePage() {
     totalScore,
     results,
     currentLevel,
+    deathReason,
     startGame,
     nextLevel,
     move,
@@ -109,17 +124,75 @@ export default function GamePage() {
     router.push(`/leaderboard?score=${totalScore}`);
   }, [router, totalScore]);
 
+  // Open alert dialog the moment we enter the dead screen
+  useEffect(() => {
+    if (screen === "dead" && prevScreen.current !== "dead") {
+      setDeathAlertOpen(true);
+      setShowDeathScreen(false);
+    }
+    prevScreen.current = screen;
+  }, [screen]);
+
   if (!ready) return null;
 
+  const isBomb = deathReason === "bomb";
   // Compute level score for win screen
   const lastResult = results[results.length - 1];
 
   return (
     <div
-      className="flex min-h-screen items-center justify-center bg-background p-3 font-sans text-foreground sm:p-4"
+      className="flex flex-1 items-center justify-center bg-background px-4 py-6 font-sans text-foreground sm:px-6"
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
     >
+      {/* ── Death / Timeout alert dialog ──────────────────────────────── */}
+      <AlertDialog open={deathAlertOpen} onOpenChange={setDeathAlertOpen}>
+        <AlertDialogContent className="max-w-sm border-border bg-card">
+          <AlertDialogHeader className="items-center text-center">
+            <div
+              className={`mb-1 flex h-14 w-14 items-center justify-center rounded-full ${
+                isBomb ? "bg-destructive/15" : "bg-chart-4/15"
+              }`}
+            >
+              {isBomb ?
+                <Bomb className="size-7 text-destructive" strokeWidth={1.5} />
+              : <Clock className="size-7 text-chart-4" strokeWidth={1.5} />}
+            </div>
+            <AlertDialogTitle
+              className={`font-bebas text-3xl tracking-widest ${
+                isBomb ? "text-destructive" : "text-chart-4"
+              }`}
+            >
+              {isBomb ? "Bomb Hit!" : "Time\u2019s Up!"}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="font-marker text-xs tracking-widest text-muted-foreground">
+              {isBomb ?
+                "You stepped on a bomb. Game over!"
+              : "You ran out of time. Better luck next time!"}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col gap-2 sm:flex-col">
+            <AlertDialogAction
+              className="w-full font-semibold"
+              onClick={() => {
+                setDeathAlertOpen(false);
+                goToLeaderboard();
+              }}
+            >
+              View Leaderboard
+            </AlertDialogAction>
+            <AlertDialogCancel
+              className="w-full"
+              onClick={() => {
+                setDeathAlertOpen(false);
+                setShowDeathScreen(true);
+              }}
+            >
+              See Score Breakdown
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       <AnimatePresence mode="wait" initial={false}>
         {screen === "game" && maze && (
           <motion.div
@@ -157,9 +230,10 @@ export default function GamePage() {
           </motion.div>
         )}
 
-        {screen === "dead" && (
+        {screen === "dead" && showDeathScreen && (
           <motion.div key="dead" {...slide} className="w-full max-w-3xl">
             <DeathScreen
+              reason={deathReason}
               totalScore={totalScore}
               results={results}
               onFinish={goToLeaderboard}

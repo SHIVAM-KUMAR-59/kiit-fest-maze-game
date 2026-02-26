@@ -1,5 +1,6 @@
 "use client";
 
+import { PartyPopper, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { LevelConfig, Star } from "@/types/maze";
 import { formatTime } from "@/lib/constants";
@@ -28,7 +29,12 @@ export function WinScreen({
   return (
     <div className="flex w-full max-w-3xl flex-col items-center gap-8">
       <div className="w-full max-w-2xl rounded-4xl border border-border bg-card px-5 py-8 text-center animate-win-pop sm:px-8 sm:py-10">
-        <span className="mb-2 block text-5xl sm:text-6xl">🎉</span>
+        <div className="mb-2 flex justify-center">
+          <PartyPopper
+            className="size-14 text-chart-4 sm:size-16"
+            strokeWidth={1.5}
+          />
+        </div>
 
         <h2 className="font-bebas mb-4 text-4xl tracking-widest text-foreground sm:text-5xl">
           {levelCfg.label} Cleared!
@@ -78,8 +84,11 @@ export function WinScreen({
 
         <div className="flex flex-wrap justify-center gap-2.5">
           {isLastLevel ?
-            <Button onClick={onFinish} className="font-bold tracking-wide">
-              View Leaderboard 🏆
+            <Button
+              onClick={onFinish}
+              className="inline-flex items-center gap-2 font-bold tracking-wide"
+            >
+              <Trophy className="size-4" /> View Leaderboard
             </Button>
           : <Button
               variant="secondary"
