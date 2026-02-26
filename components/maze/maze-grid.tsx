@@ -5,7 +5,7 @@ import type {
   Position,
   LevelConfig,
 } from "@/types/maze";
-import { CELL_SIZE, WALL_WIDTH } from "@/lib/constants";
+import { BLOCK_CELL_SIZE, FOG_RADIUS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 interface MazeGridProps {
@@ -15,48 +15,78 @@ interface MazeGridProps {
 }
 
 export function MazeGrid({ maze, player, levelCfg }: Readonly<MazeGridProps>) {
-  const cs = CELL_SIZE[levelCfg.level] ?? 44;
-  const totalWidth = levelCfg.cols * cs + WALL_WIDTH;
-  const totalHeight = levelCfg.rows * cs + WALL_WIDTH;
+  const bs = BLOCK_CELL_SIZE[levelCfg.level] ?? 22;
+
+  // Block-grid dimensions (2×rows+1) × (2×cols+1)
+  const blockCols = maze[0]?.length ?? 0;
+
+  // Player & landmark block positions  (logical n → block 2n+1)
+  const playerBR = 2 * player.r + 1;
+  const playerBC = 2 * player.c + 1;
+  const endBR = 2 * (levelCfg.rows - 1) + 1;
+  const endBC = 2 * (levelCfg.cols - 1) + 1;
+
+  // fog radius in block-cell units (1 logical cell = 2 block cells)
+  const fogRange = FOG_RADIUS * 2;
+
+  const isVisible = (br: number, bc: number) => {
+    if (br === endBR && bc === endBC) return true; // destination always on
+    return (
+      Math.abs(br - playerBR) <= fogRange && Math.abs(bc - playerBC) <= fogRange
+    );
+  };
 
   return (
-    <div className="max-w-full overflow-auto rounded-2xl border border-border bg-card/90 p-3 shadow-sm animate-maze-in sm:p-4">
+    <div className="max-w-full overflow-auto rounded-2xl border border-border bg-background p-3 shadow-sm animate-maze-in sm:p-4">
       <div
         className="relative"
-        style={{ width: totalWidth, height: totalHeight }}
+        style={{ width: blockCols * bs, height: maze.length * bs }}
       >
-        {maze.map((row, r) =>
-          row.map((cell, c) => {
-            const isPlayer = player.r === r && player.c === c;
-            const isEnd = r === levelCfg.rows - 1 && c === levelCfg.cols - 1;
-            const isStart = r === 0 && c === 0;
+        {maze.map((row, br) =>
+          row.map((cell, bc) => {
+            const visible = isVisible(br, bc);
+            const isPlayerCell = br === playerBR && bc === playerBC;
+            const isEnd = br === endBR && bc === endBC;
+            const isBomb = cell.hasBomb && visible && !isPlayerCell;
 
             return (
               <div
-                key={`${r}-${c}`}
+                key={`${br}-${bc}`}
                 className={cn(
-                  "absolute box-border",
-                  isEnd && "bg-chart-2/15",
-                  isStart && "bg-chart-4/15",
+                  "absolute transition-colors duration-200",
+                  !visible && "bg-muted/90",
+                  visible && cell.isWall && "bg-muted rounded-[2px]",
+                  visible && !cell.isWall && isEnd && "bg-secondary/20",
+                  visible && !cell.isWall && !isEnd && "bg-background",
                 )}
                 style={{
-                  left: c * cs,
-                  top: r * cs,
-                  width: cs,
-                  height: cs,
-                  borderTop: `${WALL_WIDTH}px solid ${cell.top ? "var(--border)" : "transparent"}`,
-                  borderRight: `${WALL_WIDTH}px solid ${cell.right ? "var(--border)" : "transparent"}`,
-                  borderBottom: `${WALL_WIDTH}px solid ${cell.bottom ? "var(--border)" : "transparent"}`,
-                  borderLeft: `${WALL_WIDTH}px solid ${cell.left ? "var(--border)" : "transparent"}`,
+                  left: bc * bs,
+                  top: br * bs,
+                  width: bs,
+                  height: bs,
                 }}
               >
-                {isEnd && (
-                  <span className="absolute top-1/2 left-1/2 z-5 -translate-x-1/2 -translate-y-1/2 text-2xl">
+                {isEnd && visible && (
+                  <span
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 leading-none animate-pulse"
+                    style={{ fontSize: bs * 0.7 }}
+                  >
                     🏁
                   </span>
                 )}
-                {isPlayer && (
-                  <div className="absolute top-1/2 left-1/2 z-10 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-primary/40 animate-player-pulse" />
+                {isBomb && (
+                  <span
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 leading-none"
+                    style={{ fontSize: bs * 0.65 }}
+                  >
+                    💣
+                  </span>
+                )}
+                {isPlayerCell && (
+                  <div
+                    className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary ring-2 ring-primary/40 animate-player-pulse"
+                    style={{ width: bs * 0.65, height: bs * 0.65 }}
+                  />
                 )}
               </div>
             );

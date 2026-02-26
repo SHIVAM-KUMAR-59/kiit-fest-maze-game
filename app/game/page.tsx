@@ -10,11 +10,11 @@ import {
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useMazeGame } from "@/hooks/use-maze-game";
-import { HomeScreen } from "@/components/maze/home-screen";
 import { GameScreen } from "@/components/maze/game-screen";
 import { WinScreen } from "@/components/maze/win-screen";
+import { DeathScreen } from "@/components/maze/death-screen";
 import { loadPlayer } from "@/lib/player-store";
-import { LEVELS } from "@/lib/constants";
+import { LEVELS, calcScore } from "@/lib/constants";
 import type { Direction } from "@/types/maze";
 
 const KEY_MAP: Record<string, Direction> = {
@@ -37,23 +37,7 @@ const slide = {
 
 export default function GamePage() {
   const router = useRouter();
-  const [player, setPlayer] = useState<{ name: string; email: string } | null>(
-    null,
-  );
-
-  // ── Guard: require registration ────────────────────────────────────────────
-  useEffect(() => {
-    const info = loadPlayer();
-    if (!info) {
-      router.replace("/");
-      return;
-    }
-    startTransition(() => {
-      setPlayer(info);
-    });
-  }, [router]);
-
-  const ready = player !== null;
+  const [ready, setReady] = useState(false);
 
   const {
     screen,
@@ -63,10 +47,26 @@ export default function GamePage() {
     moves,
     time,
     stars,
-    startLevel,
+    totalScore,
+    results,
+    currentLevel,
+    startGame,
+    nextLevel,
     move,
-    goHome,
   } = useMazeGame();
+
+  // ── Guard: require registration, then auto-start level 1 ──────────────────
+  useEffect(() => {
+    const info = loadPlayer();
+    if (!info) {
+      router.replace("/");
+      return;
+    }
+    startTransition(() => {
+      setReady(true);
+      startGame();
+    });
+  }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const touchStart = useRef<{ x: number; y: number } | null>(null);
 
@@ -105,7 +105,14 @@ export default function GamePage() {
     [move],
   );
 
+  const goToLeaderboard = useCallback(() => {
+    router.push(`/leaderboard?score=${totalScore}`);
+  }, [router, totalScore]);
+
   if (!ready) return null;
+
+  // Compute level score for win screen
+  const lastResult = results[results.length - 1];
 
   return (
     <div
@@ -114,26 +121,12 @@ export default function GamePage() {
       onTouchEnd={onTouchEnd}
     >
       <AnimatePresence mode="wait" initial={false}>
-        {screen === "home" && (
-          <motion.div key="home" {...slide} className="w-full max-w-3xl">
-            <HomeScreen onStartLevel={startLevel} />
-            {player && (
-              <p className="mt-3 text-center text-xs tracking-wide text-muted-foreground">
-                Signed in as {player.name} · {player.email}
-                {" · "}
-                <button
-                  className="underline underline-offset-2 hover:text-primary"
-                  onClick={() => router.push("/leaderboard")}
-                >
-                  Leaderboard
-                </button>
-              </p>
-            )}
-          </motion.div>
-        )}
-
-        {screen === "game" && maze && levelCfg && (
-          <motion.div key="game" {...slide} className="w-full">
+        {screen === "game" && maze && (
+          <motion.div
+            key={`game-${currentLevel}`}
+            {...slide}
+            className="w-full"
+          >
             <GameScreen
               maze={maze}
               player={pos}
@@ -141,25 +134,35 @@ export default function GamePage() {
               time={time}
               moves={moves}
               onMove={move}
-              onHome={goHome}
             />
           </motion.div>
         )}
 
-        {screen === "win" && levelCfg && (
-          <motion.div key="win" {...slide} className="w-full max-w-3xl">
+        {screen === "win" && (
+          <motion.div
+            key={`win-${currentLevel}`}
+            {...slide}
+            className="w-full max-w-3xl"
+          >
             <WinScreen
               levelCfg={levelCfg}
               stars={stars}
-              time={time}
-              moves={moves}
-              onRetry={() => startLevel(levelCfg)}
-              onNextLevel={() =>
-                levelCfg.level < 3 ?
-                  startLevel(LEVELS[levelCfg.level])
-                : undefined
-              }
-              onHome={goHome}
+              time={lastResult?.time ?? time}
+              moves={lastResult?.moves ?? moves}
+              score={lastResult?.score ?? 0}
+              isLastLevel={currentLevel >= LEVELS.length - 1}
+              onNextLevel={nextLevel}
+              onFinish={goToLeaderboard}
+            />
+          </motion.div>
+        )}
+
+        {screen === "dead" && (
+          <motion.div key="dead" {...slide} className="w-full max-w-3xl">
+            <DeathScreen
+              totalScore={totalScore}
+              results={results}
+              onFinish={goToLeaderboard}
             />
           </motion.div>
         )}

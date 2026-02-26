@@ -1,16 +1,16 @@
+/**
+ * Block-grid model.
+ * The actual grid is (2×rows+1) × (2×cols+1).
+ * Logical player cells sit at odd indices; wall/connector cells at even indices.
+ */
 export interface MazeCell {
-  top: boolean;
-  right: boolean;
-  bottom: boolean;
-  left: boolean;
-  visited: boolean;
+  isWall: boolean;
+  hasBomb: boolean;
 }
 
 export type MazeGrid = MazeCell[][];
 
 export type Direction = "up" | "down" | "left" | "right";
-
-export type WallKey = "top" | "right" | "bottom" | "left";
 
 export interface Position {
   r: number;
@@ -23,8 +23,11 @@ export interface LevelConfig {
   cols: number;
   label: string;
   sub: string;
+  bombs: number;
+  /** Time limit in seconds. Player is eliminated when elapsed time reaches this. */
+  timeLimit: number;
 }
 
-export type ScreenState = "home" | "game" | "win";
+export type ScreenState = "game" | "win" | "dead";
 
 export type Star = "★" | "☆";

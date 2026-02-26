@@ -17,7 +17,6 @@ interface GameScreenProps {
   time: number;
   moves: number;
   onMove: (dir: Direction) => void;
-  onHome: () => void;
 }
 
 export function GameScreen({
@@ -27,11 +26,10 @@ export function GameScreen({
   time,
   moves,
   onMove,
-  onHome,
 }: Readonly<GameScreenProps>) {
   return (
     <div className="flex flex-col items-center gap-5 w-full">
-      <Hud levelCfg={levelCfg} time={time} moves={moves} onHome={onHome} />
+      <Hud levelCfg={levelCfg} time={time} moves={moves} />
       <MazeGrid maze={maze} player={player} levelCfg={levelCfg} />
       <DPad onMove={onMove} />
     </div>

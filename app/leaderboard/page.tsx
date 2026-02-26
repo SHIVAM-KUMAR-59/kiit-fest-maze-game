@@ -1,28 +1,26 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, useMemo, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   LeaderboardScreen,
   type LeaderboardEntry,
 } from "@/components/maze/leaderboard-screen";
-import { loadPlayer } from "@/lib/player-store";
+import { loadPlayer, clearPlayer } from "@/lib/player-store";
 
-const SAMPLE_ENTRIES: LeaderboardEntry[] = [
-  { rank: 1, name: "Ananya", level: "Level 3", time: "00:43", moves: 68 },
-  { rank: 2, name: "Rohit", level: "Level 3", time: "00:49", moves: 72 },
-  { rank: 3, name: "Sara", level: "Level 2", time: "00:36", moves: 45 },
-  { rank: 4, name: "Dev", level: "Level 2", time: "00:39", moves: 53 },
-  { rank: 5, name: "Meera", level: "Level 1", time: "00:19", moves: 21 },
+const SAMPLE_ENTRIES: Omit<LeaderboardEntry, "rank">[] = [
+  { name: "Ananya", score: 2850 },
+  { name: "Rohit", score: 2420 },
+  { name: "Sara", score: 1980 },
+  { name: "Dev", score: 1650 },
+  { name: "Meera", score: 1200 },
 ];
 
-export default function LeaderboardPage() {
+function LeaderboardContent() {
   const router = useRouter();
-  const [playerData] = useState(() => {
-    const player = loadPlayer();
-    return player;
-  });
+  const searchParams = useSearchParams();
+  const [playerData] = useState(() => loadPlayer());
 
   useEffect(() => {
     if (!playerData) {
@@ -30,19 +28,21 @@ export default function LeaderboardPage() {
     }
   }, [router, playerData]);
 
+  const playerScore = Number(searchParams.get("score") ?? 0);
+
   const entries = useMemo<LeaderboardEntry[]>(() => {
-    if (!playerData) return SAMPLE_ENTRIES;
-    return [
-      {
-        rank: 6,
+    const all: Omit<LeaderboardEntry, "rank">[] = [...SAMPLE_ENTRIES];
+    if (playerData) {
+      all.push({
         name: playerData.name,
-        level: "Pending",
-        time: "--:--",
-        moves: 0,
-      },
-      ...SAMPLE_ENTRIES,
-    ];
-  }, [playerData]);
+        score: playerScore,
+        isPlayer: true,
+      });
+    }
+    // Sort descending by score
+    all.sort((a, b) => b.score - a.score);
+    return all.map((e, i) => ({ ...e, rank: i + 1 }));
+  }, [playerData, playerScore]);
 
   if (!playerData) return null;
 
@@ -56,9 +56,20 @@ export default function LeaderboardPage() {
       >
         <LeaderboardScreen
           entries={entries}
-          onStart={() => router.push("/game")}
+          onPlayAgain={() => {
+            clearPlayer();
+            router.push("/");
+          }}
         />
       </motion.div>
     </div>
+  );
+}
+
+export default function LeaderboardPage() {
+  return (
+    <Suspense>
+      <LeaderboardContent />
+    </Suspense>
   );
 }

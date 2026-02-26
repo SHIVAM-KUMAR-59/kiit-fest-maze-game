@@ -9,9 +9,10 @@ interface WinScreenProps {
   stars: Star[];
   time: number;
   moves: number;
-  onRetry: () => void;
+  score: number;
+  isLastLevel: boolean;
   onNextLevel: () => void;
-  onHome: () => void;
+  onFinish: () => void;
 }
 
 export function WinScreen({
@@ -19,9 +20,10 @@ export function WinScreen({
   stars,
   time,
   moves,
-  onRetry,
+  score,
+  isLastLevel,
   onNextLevel,
-  onHome,
+  onFinish,
 }: Readonly<WinScreenProps>) {
   return (
     <div className="flex w-full max-w-3xl flex-col items-center gap-8">
@@ -29,7 +31,7 @@ export function WinScreen({
         <span className="mb-2 block text-5xl sm:text-6xl">🎉</span>
 
         <h2 className="font-bebas mb-4 text-4xl tracking-widest text-foreground sm:text-5xl">
-          Maze Solved!
+          {levelCfg.label} Cleared!
         </h2>
 
         <div className="mb-6 text-4xl">
@@ -47,45 +49,46 @@ export function WinScreen({
           ))}
         </div>
 
-        <div className="mb-8 grid grid-cols-1 justify-center gap-4 sm:grid-cols-2 sm:gap-6">
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 px-7 py-4">
-            <span className="font-mono text-3xl font-bold text-primary">
+        <div className="mb-8 grid grid-cols-1 justify-center gap-3 sm:grid-cols-3 sm:gap-4">
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 px-5 py-3">
+            <span className="font-mono text-2xl font-bold text-primary">
               {formatTime(time)}
             </span>
             <span className="text-xs tracking-widest text-muted-foreground uppercase">
               Time
             </span>
           </div>
-          <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 px-7 py-4">
-            <span className="font-mono text-3xl font-bold text-primary">
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-muted/60 px-5 py-3">
+            <span className="font-mono text-2xl font-bold text-primary">
               {moves}
             </span>
             <span className="text-xs tracking-widest text-muted-foreground uppercase">
               Moves
             </span>
           </div>
+          <div className="flex flex-col items-center gap-1 rounded-xl bg-secondary/20 px-5 py-3">
+            <span className="font-mono text-2xl font-bold text-secondary">
+              +{score}
+            </span>
+            <span className="text-xs tracking-widest text-muted-foreground uppercase">
+              Score
+            </span>
+          </div>
         </div>
 
         <div className="flex flex-wrap justify-center gap-2.5">
-          <Button onClick={onRetry} className="font-bold tracking-wide">
-            ↺ Retry
-          </Button>
-          {levelCfg.level < 3 && (
-            <Button
+          {isLastLevel ?
+            <Button onClick={onFinish} className="font-bold tracking-wide">
+              View Leaderboard 🏆
+            </Button>
+          : <Button
               variant="secondary"
               onClick={onNextLevel}
               className="font-bold tracking-wide"
             >
               Next Level →
             </Button>
-          )}
-          <Button
-            variant="ghost"
-            onClick={onHome}
-            className="border border-border text-muted-foreground hover:text-foreground"
-          >
-            Home
-          </Button>
+          }
         </div>
       </div>
     </div>

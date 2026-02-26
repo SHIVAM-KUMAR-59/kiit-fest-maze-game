@@ -9,9 +9,9 @@ import { savePlayer, loadPlayer } from "@/lib/player-store";
 export default function RegisterPage() {
   const router = useRouter();
 
-  // If already registered, skip straight to leaderboard
+  // If already registered, skip straight to game
   useEffect(() => {
-    if (loadPlayer()) router.replace("/leaderboard");
+    if (loadPlayer()) router.replace("/game");
   }, [router]);
 
   return (
@@ -23,9 +23,9 @@ export default function RegisterPage() {
         className="w-full max-w-lg"
       >
         <RegistrationScreen
-          onContinue={(name, email) => {
-            savePlayer({ name, email });
-            router.push("/leaderboard");
+          onContinue={(name, email, kfid) => {
+            savePlayer({ name, email, kfid });
+            router.push("/game");
           }}
         />
       </motion.div>
