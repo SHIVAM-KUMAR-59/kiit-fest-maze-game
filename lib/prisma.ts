@@ -5,11 +5,11 @@ declare global {
 }
 
 export const prisma =
-  globalThis.prisma ||
+  global.prisma ||
   new PrismaClient({
     datasourceUrl: process.env.DATABASE_URL,
   });
 
 if (process.env.NODE_ENV !== "production") {
-  globalThis.prisma = prisma;
+  global.prisma = prisma;
 }
