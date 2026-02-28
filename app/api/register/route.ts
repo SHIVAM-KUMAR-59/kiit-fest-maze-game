@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -12,7 +13,7 @@ export async function POST(req: Request) {
           success: false,
           message: "Name, Email and KFID are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
           success: false,
           message: "Only KIIT email allowed",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -40,7 +41,7 @@ export async function POST(req: Request) {
           success: false,
           message: "Email already registered",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -55,7 +56,7 @@ export async function POST(req: Request) {
           success: false,
           message: "KFID already registered",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -74,18 +75,26 @@ export async function POST(req: Request) {
         message: "Registration successful",
         data: user,
       },
-      { status: 201 }
+      { status: 201 },
     );
-
   } catch (error) {
     console.error(error);
 
+    // Unique constraint violation — email or kfid already taken (race condition)
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      const field = (error.meta?.target as string[])?.join(", ") ?? "field";
+      return NextResponse.json(
+        { success: false, message: `${field} already registered` },
+        { status: 409 },
+      );
+    }
+
     return NextResponse.json(
-      {
-        success: false,
-        message: "Server error",
-      },
-      { status: 500 }
+      { success: false, message: "Server error" },
+      { status: 500 },
     );
   }
 }

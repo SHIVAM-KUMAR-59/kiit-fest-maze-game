@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 function getLevelConfig(level: number) {
   switch (level) {
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
     if (!userId || level === undefined) {
       return NextResponse.json(
         { success: false, message: "Level and userId required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -31,7 +32,7 @@ export async function POST(req: Request) {
     if (!config) {
       return NextResponse.json(
         { success: false, message: "Invalid level" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,12 +57,23 @@ export async function POST(req: Request) {
         bombs: config.bombs,
       },
     });
-
   } catch (error) {
     console.error(error);
+
+    // P2003 – FK violation: userId doesn't exist in User table
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2003"
+    ) {
+      return NextResponse.json(
+        { success: false, message: "User not found" },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json(
       { success: false, message: "Server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

@@ -1,4 +1,5 @@
 export interface PlayerInfo {
+  id: string; // DB user id
   name: string;
   email: string;
   kfid: string;
@@ -16,7 +17,10 @@ export function loadPlayer(): PlayerInfo | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as PlayerInfo;
+    const parsed = JSON.parse(raw) as PlayerInfo;
+    // Stale entry from before backend integration — force re-registration
+    if (!parsed.id) return null;
+    return parsed;
   } catch {
     return null;
   }

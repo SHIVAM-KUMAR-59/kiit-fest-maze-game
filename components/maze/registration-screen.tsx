@@ -30,11 +30,15 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface RegistrationScreenProps {
-  onContinue: (name: string, email: string, kfid: string) => void;
+  onContinue: (name: string, email: string, kfid: string) => Promise<void>;
+  error?: string;
+  loading?: boolean;
 }
 
 export function RegistrationScreen({
   onContinue,
+  error,
+  loading,
 }: Readonly<RegistrationScreenProps>) {
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -45,8 +49,12 @@ export function RegistrationScreen({
     },
   });
 
-  const onSubmit = (values: FormValues) => {
-    onContinue(values.name.trim(), values.email.trim(), values.kfid.trim());
+  const onSubmit = async (values: FormValues) => {
+    await onContinue(
+      values.name.trim(),
+      values.email.trim(),
+      values.kfid.trim(),
+    );
   };
 
   return (
@@ -127,10 +135,18 @@ export function RegistrationScreen({
             <Button
               type="submit"
               className="mt-2 h-11 w-full font-semibold tracking-wide"
-              disabled={form.formState.isSubmitting}
+              disabled={form.formState.isSubmitting || loading}
             >
-              Start Challenge
+              {form.formState.isSubmitting || loading ?
+                "Registering..."
+              : "Start Challenge"}
             </Button>
+
+            {error && (
+              <p className="mt-2 text-center text-sm text-destructive">
+                {error}
+              </p>
+            )}
           </form>
         </Form>
       </CardContent>

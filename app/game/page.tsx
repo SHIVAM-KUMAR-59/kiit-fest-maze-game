@@ -79,7 +79,7 @@ export default function GamePage() {
     }
     startTransition(() => {
       setReady(true);
-      startGame();
+      startGame(info.id);
     });
   }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 

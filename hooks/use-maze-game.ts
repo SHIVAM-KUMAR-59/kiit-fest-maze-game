@@ -32,7 +32,7 @@ export interface UseMazeGameReturn {
   results: LevelResult[];
   currentLevel: number;
   deathReason: "bomb" | "timeout";
-  startGame: () => void;
+  startGame: (userId: string) => void;
   nextLevel: () => void;
   move: (dir: Direction) => void;
 }
@@ -49,6 +49,8 @@ export function useMazeGame(): UseMazeGameReturn {
   const [results, setResults] = useState<LevelResult[]>([]);
   const [deathReason, setDeathReason] = useState<"bomb" | "timeout">("bomb");
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const userIdRef = useRef<string>("");
+  const sessionIdRef = useRef<string>("");
 
   const levelCfg = LEVELS[currentLevel] ?? LEVELS[0];
 
@@ -73,20 +75,69 @@ export function useMazeGame(): UseMazeGameReturn {
     }
   }, [time, screen, levelCfg.timeLimit]);
 
-  // ── Start game (level 1) ──────────────────────────────────────────────────
-  const startGame = useCallback(() => {
-    const cfg = LEVELS[0];
-    setCurrentLevel(0);
-    setMaze(generateMaze(cfg.rows, cfg.cols, cfg.bombs));
-    setPlayer({ r: 0, c: 0 });
-    setMoves(0);
-    setTime(0);
-    setStars([]);
-    setTotalScore(0);
-    setResults([]);
-    setDeathReason("bomb");
-    setScreen("game");
+  // ── Create session via API (fire-and-forget, capture sessionId) ─────────
+  const createSession = useCallback(async (userId: string, level: number) => {
+    try {
+      const res = await fetch("/api/game", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, level }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionIdRef.current = data.data.sessionId;
+      }
+    } catch {
+      // Non-blocking – game still works offline
+    }
   }, []);
+
+  // ── Submit score via API (fire-and-forget) ─────────────────────────────────
+  const submitScore = useCallback(
+    async (level: number, timeTaken: number, points: number) => {
+      if (!userIdRef.current || !sessionIdRef.current) return;
+      try {
+        await fetch("/api/score", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: userIdRef.current,
+            sessionId: sessionIdRef.current,
+            level,
+            gridSize:
+              level === 1 ? 6
+              : level === 2 ? 8
+              : 10,
+            timeTaken,
+            points,
+          }),
+        });
+      } catch {
+        // Non-blocking
+      }
+    },
+    [],
+  );
+
+  // ── Start game (level 1) ──────────────────────────────────────────────────
+  const startGame = useCallback(
+    (userId: string) => {
+      userIdRef.current = userId;
+      const cfg = LEVELS[0];
+      setCurrentLevel(0);
+      setMaze(generateMaze(cfg.rows, cfg.cols, cfg.bombs));
+      setPlayer({ r: 0, c: 0 });
+      setMoves(0);
+      setTime(0);
+      setStars([]);
+      setTotalScore(0);
+      setResults([]);
+      setDeathReason("bomb");
+      setScreen("game");
+      createSession(userId, cfg.level);
+    },
+    [createSession],
+  );
 
   // ── Next level ─────────────────────────────────────────────────────────────
   const nextLevel = useCallback(() => {
@@ -100,7 +151,10 @@ export function useMazeGame(): UseMazeGameReturn {
     setTime(0);
     setStars([]);
     setScreen("game");
-  }, [currentLevel]);
+    if (userIdRef.current) {
+      createSession(userIdRef.current, cfg.level);
+    }
+  }, [currentLevel, createSession]);
 
   // ── Move player ────────────────────────────────────────────────────────────
   const move = useCallback(
@@ -142,6 +196,8 @@ export function useMazeGame(): UseMazeGameReturn {
       if (nr === levelCfg.rows - 1 && nc === levelCfg.cols - 1) {
         const s = calcStars(newMoves, time + 1, levelCfg.level);
         const score = calcScore(levelCfg.level, time + 1, newMoves);
+        // Submit score to backend
+        submitScore(levelCfg.level, time + 1, score);
         setTimeout(() => {
           setStars(s);
           setTotalScore((prev) => prev + score);
@@ -159,7 +215,7 @@ export function useMazeGame(): UseMazeGameReturn {
         }, 100);
       }
     },
-    [maze, screen, player, levelCfg, moves, time],
+    [maze, screen, player, levelCfg, moves, time, submitScore],
   );
 
   return {
