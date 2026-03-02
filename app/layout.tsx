@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, Space_Grotesk, Permanent_Marker } from "next/font/google";
 import "./globals.css";
+import { Header } from "@/components/maze/header";
 import { Footer } from "@/components/maze/footer";
 
 const bebasNeue = Bebas_Neue({
@@ -21,7 +22,7 @@ const permanentMarker = Permanent_Marker({
 });
 
 export const metadata: Metadata = {
-  title: "MazeRun – KIIT Fest Maze Game",
+  title: "Maze Run – KIIT Fest Maze Game",
   description: "Navigate the maze, beat the clock, earn stars!",
 };
 
@@ -36,6 +37,7 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${bebasNeue.variable} ${permanentMarker.variable} flex min-h-screen flex-col font-sans antialiased`}
         suppressHydrationWarning
       >
+        <Header />
         <main className="flex flex-1 flex-col">{children}</main>
         <Footer />
       </body>

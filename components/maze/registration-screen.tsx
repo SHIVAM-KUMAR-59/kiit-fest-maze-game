@@ -58,10 +58,10 @@ export function RegistrationScreen({
   };
 
   return (
-    <Card className="w-full max-w-lg border-border bg-card/90 shadow-sm animate-screen-fade">
+    <Card className="w-full max-w-lg border-none bg-background animate-screen-fade">
       <CardHeader className="space-y-3 text-center">
         <CardTitle className="font-bebas text-4xl tracking-widest sm:text-5xl">
-          Maze Challenge
+          Maze Run
         </CardTitle>
         <CardDescription className="font-marker text-sm tracking-widest">
           Register to begin the KIIT Fest maze challenge.

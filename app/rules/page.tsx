@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Flag,
@@ -13,7 +13,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { loadPlayer } from "@/lib/player-store";
 
 const rules = [
   {
@@ -74,12 +73,26 @@ const item = {
 };
 
 export default function RulesPage() {
-  const router = useRouter();
+  return (
+    <Suspense>
+      <RulesContent />
+    </Suspense>
+  );
+}
 
-  // Guard: must be registered
-  useEffect(() => {
-    if (!loadPlayer()) router.replace("/");
-  }, [router]);
+function RulesContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("userId");
+  const name = searchParams.get("name") ?? "";
+  const email = searchParams.get("email") ?? "";
+
+  if (!userId) {
+    router.replace("/");
+    return null;
+  }
+
+  const gameParams = new URLSearchParams({ userId, name, email });
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center gap-8 bg-background px-4 py-8 sm:px-6 sm:py-10">
@@ -135,7 +148,7 @@ export default function RulesPage() {
         <Button
           size="lg"
           className="inline-flex items-center gap-2 px-10 font-bold tracking-widest"
-          onClick={() => router.push("/game")}
+          onClick={() => router.push(`/game?${gameParams.toString()}`)}
         >
           I&apos;m Ready <ChevronRight className="size-5" />
         </Button>

@@ -70,8 +70,10 @@ export function useMazeGame(): UseMazeGameReturn {
   // ── Time-limit enforcement ─────────────────────────────────────────────────
   useEffect(() => {
     if (screen === "game" && time >= levelCfg.timeLimit) {
-      setDeathReason("timeout");
-      setScreen("dead");
+      setTimeout(() => {
+        setDeathReason("timeout");
+        setScreen("dead");
+      }, 0);
     }
   }, [time, screen, levelCfg.timeLimit]);
 

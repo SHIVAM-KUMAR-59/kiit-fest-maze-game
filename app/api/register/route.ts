@@ -17,64 +17,43 @@ export async function POST(req: Request) {
       );
     }
 
-    // KIIT Email validation
-    const kiitEmailRegex = /^[a-zA-Z0-9._%+-]+@kiit\.ac\.in$/;
-
-    if (!kiitEmailRegex.test(email)) {
+    // If user with this email already exists, let them play again
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      // If the KFID doesn't match, it's a different person using the same email
+      if (existingUser.kfid !== kfid) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Email already registered with a different KFID",
+          },
+          { status: 409 },
+        );
+      }
+      // Same person — return their existing account so they can play again
       return NextResponse.json(
-        {
-          success: false,
-          message: "Only KIIT email allowed",
-        },
-        { status: 400 },
+        { success: true, message: "Welcome back!", data: existingUser },
+        { status: 200 },
       );
     }
 
-    // Check if email already exists
-    const existingEmail = await prisma.user.findUnique({
-      where: { email },
-    });
-
-    if (existingEmail) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Email already registered",
-        },
-        { status: 409 },
-      );
-    }
-
-    // Check if KFID already exists
-    const existingKfid = await prisma.user.findUnique({
-      where: { kfid },
-    });
-
+    // Check if KFID is taken by a different account
+    const existingKfid = await prisma.user.findUnique({ where: { kfid } });
     if (existingKfid) {
       return NextResponse.json(
         {
           success: false,
-          message: "KFID already registered",
+          message: "KFID already registered with a different email",
         },
         { status: 409 },
       );
     }
 
-    // Create user
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        kfid,
-      },
-    });
+    // New user — create record
+    const user = await prisma.user.create({ data: { name, email, kfid } });
 
     return NextResponse.json(
-      {
-        success: true,
-        message: "Registration successful",
-        data: user,
-      },
+      { success: true, message: "Registration successful", data: user },
       { status: 201 },
     );
   } catch (error) {

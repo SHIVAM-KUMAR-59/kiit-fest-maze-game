@@ -7,21 +7,22 @@ import {
   LeaderboardScreen,
   type LeaderboardEntry,
 } from "@/components/maze/leaderboard-screen";
-import { loadPlayer, clearPlayer } from "@/lib/player-store";
 
 function LeaderboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [playerData] = useState(() => loadPlayer());
+  const userId = searchParams.get("userId");
+  const playerName = searchParams.get("name") ?? "";
+  const playerEmail = searchParams.get("email") ?? "";
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!playerData) {
+    if (!userId) {
       router.replace("/");
       return;
     }
-  }, [router, playerData]);
+  }, [router, userId]);
 
   const playerScore = Number(searchParams.get("score") ?? 0);
 
@@ -38,23 +39,28 @@ function LeaderboardContent() {
             (e: {
               rank: number;
               name: string;
+              email: string;
               score: number;
+              attempts: number;
               userId: string;
             }) => ({
               rank: e.rank,
               name: e.name,
+              email: e.email,
               score: e.score,
-              isPlayer: playerData ? e.userId === playerData.id : false,
+              attempts: e.attempts,
+              isPlayer: e.userId === userId,
             }),
           );
 
           // If the current player isn't in the DB results yet (score not yet aggregated),
           // add them manually using the ?score= param
           const hasPlayer = mapped.some((e) => e.isPlayer);
-          if (!hasPlayer && playerData && playerScore > 0) {
+          if (!hasPlayer && userId && playerScore > 0) {
             mapped.push({
               rank: 0,
-              name: playerData.name,
+              name: playerName,
+              email: playerEmail,
               score: playerScore,
               isPlayer: true,
             });
@@ -67,11 +73,12 @@ function LeaderboardContent() {
         }
       } catch {
         // Fallback: show just the player
-        if (playerData) {
+        if (userId) {
           setEntries([
             {
               rank: 1,
-              name: playerData.name,
+              name: playerName,
+              email: playerEmail,
               score: playerScore,
               isPlayer: true,
             },
@@ -83,9 +90,9 @@ function LeaderboardContent() {
     }
 
     fetchLeaderboard();
-  }, [playerData, playerScore]);
+  }, [userId, playerScore]);
 
-  if (!playerData) return null;
+  if (!userId) return null;
 
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-8 sm:px-6">
@@ -103,10 +110,7 @@ function LeaderboardContent() {
           </div>
         : <LeaderboardScreen
             entries={entries}
-            onPlayAgain={() => {
-              clearPlayer();
-              router.push("/");
-            }}
+            onPlayAgain={() => router.push("/")}
           />
         }
       </motion.div>

@@ -1,20 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { RegistrationScreen } from "@/components/maze/registration-screen";
-import { savePlayer, loadPlayer } from "@/lib/player-store";
 
 export default function RegisterPage() {
   const router = useRouter();
   const [regError, setRegError] = useState("");
   const [regLoading, setRegLoading] = useState(false);
-
-  // If already registered, skip straight to rules
-  useEffect(() => {
-    if (loadPlayer()) router.replace("/rules");
-  }, [router]);
 
   const handleRegister = async (name: string, email: string, kfid: string) => {
     setRegError("");
@@ -32,8 +26,12 @@ export default function RegisterPage() {
         return;
       }
 
-      savePlayer({ id: data.data.id, name, email, kfid });
-      router.push("/rules");
+      const userId = data.data.id as string;
+      const params = new URLSearchParams({ userId, name, email });
+      // 200 = returning user ("Welcome back!") — skip rules, go straight to game
+      // 201 = new user — show rules first
+      const destination = res.status === 200 ? "/game" : "/rules";
+      router.push(`${destination}?${params.toString()}`);
     } catch {
       setRegError("Network error. Please try again.");
     } finally {
