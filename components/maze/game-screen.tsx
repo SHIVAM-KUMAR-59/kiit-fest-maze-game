@@ -28,9 +28,11 @@ export function GameScreen({
   onMove,
 }: Readonly<GameScreenProps>) {
   return (
-    <div className="flex flex-col items-center gap-5 w-full">
-      <Hud levelCfg={levelCfg} time={time} moves={moves} />
-      <MazeGrid maze={maze} player={player} levelCfg={levelCfg} />
+    <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+      <div className="space-y-3">
+        <Hud levelCfg={levelCfg} time={time} moves={moves} />
+        <MazeGrid maze={maze} player={player} levelCfg={levelCfg} />
+      </div>
       <DPad onMove={onMove} />
     </div>
   );

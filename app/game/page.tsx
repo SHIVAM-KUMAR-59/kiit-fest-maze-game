@@ -6,8 +6,9 @@ import {
   useCallback,
   useState,
   startTransition,
+  Suspense,
 } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bomb, Clock } from "lucide-react";
 import { useMazeGame } from "@/hooks/use-maze-game";
@@ -24,7 +25,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
 } from "@/components/ui/alert-dialog";
-import { loadPlayer } from "@/lib/player-store";
 import { LEVELS } from "@/lib/constants";
 import type { Direction } from "@/types/maze";
 
@@ -47,7 +47,19 @@ const slide = {
 };
 
 export default function GamePage() {
+  return (
+    <Suspense>
+      <GameContent />
+    </Suspense>
+  );
+}
+
+function GameContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const userId = searchParams.get("userId");
+  const name = searchParams.get("name") ?? "";
+  const email = searchParams.get("email") ?? "";
   const [ready, setReady] = useState(false);
   const [deathAlertOpen, setDeathAlertOpen] = useState(false);
   const [showDeathScreen, setShowDeathScreen] = useState(false);
@@ -72,14 +84,13 @@ export default function GamePage() {
 
   // ── Guard: require registration, then auto-start level 1 ──────────────────
   useEffect(() => {
-    const info = loadPlayer();
-    if (!info) {
+    if (!userId) {
       router.replace("/");
       return;
     }
     startTransition(() => {
       setReady(true);
-      startGame();
+      startGame(userId);
     });
   }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -121,8 +132,14 @@ export default function GamePage() {
   );
 
   const goToLeaderboard = useCallback(() => {
-    router.push(`/leaderboard?score=${totalScore}`);
-  }, [router, totalScore]);
+    const params = new URLSearchParams({
+      userId: userId ?? "",
+      name,
+      email,
+      score: String(totalScore),
+    });
+    router.push(`/leaderboard?${params.toString()}`);
+  }, [router, userId, name, email, totalScore]);
 
   // Open alert dialog the moment we enter the dead screen
   useEffect(() => {

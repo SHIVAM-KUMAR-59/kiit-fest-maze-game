@@ -28,7 +28,7 @@ export function WinScreen({
 }: Readonly<WinScreenProps>) {
   return (
     <div className="flex w-full max-w-3xl flex-col items-center gap-8">
-      <div className="w-full max-w-2xl rounded-4xl border border-border bg-card px-5 py-8 text-center animate-win-pop sm:px-8 sm:py-10">
+      <div className="w-full max-w-2xl px-5 py-8 text-center animate-win-pop sm:px-8 sm:py-10">
         <div className="mb-2 flex justify-center">
           <PartyPopper
             className="size-14 text-chart-4 sm:size-16"
