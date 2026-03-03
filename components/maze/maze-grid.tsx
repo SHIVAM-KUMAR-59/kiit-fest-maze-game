@@ -57,6 +57,7 @@ export function MazeGrid({ maze, player, levelCfg }: Readonly<MazeGridProps>) {
                 key={`${br}-${bc}`}
                 className={cn(
                   "absolute flex items-center justify-center transition-colors duration-200",
+                  isPlayerCell && "z-10",
                   !visible && "bg-muted/90",
                   visible && cell.isWall && "bg-muted rounded-[2px]",
                   visible && !cell.isWall && isEnd && "bg-secondary/20",

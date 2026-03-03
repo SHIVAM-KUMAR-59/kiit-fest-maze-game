@@ -84,13 +84,48 @@ export function generateMaze(
     grid[2 * vr + 2][2 * vc + 1].isWall = false;
   }
 
-  // Place bombs on random LOGICAL cells (not start 0,0 or end rows-1,cols-1)
+  // ── Find a solution path (BFS) ──────────────────────────────────────────
+  const path = new Set<string>();
+  const queue: [number, number][] = [[0, 0]];
+  const parents = new Map<string, string>();
+  const pathVisited = new Set<string>(["0,0"]);
+
+  while (queue.length > 0) {
+    const [r, c] = queue.shift()!;
+    if (r === rows - 1 && c === cols - 1) {
+      let curr: string | undefined = `${r},${c}`;
+      while (curr) {
+        path.add(curr);
+        curr = parents.get(curr);
+      }
+      break;
+    }
+
+    for (const [dr, dc] of DIRS) {
+      const nr = r + dr;
+      const nc = c + dc;
+      if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+        // block connector check
+        if (!grid[2 * r + 1 + dr][2 * c + 1 + dc].isWall) {
+          const key = `${nr},${nc}`;
+          if (!pathVisited.has(key)) {
+            pathVisited.add(key);
+            parents.set(key, `${r},${c}`);
+            queue.push([nr, nc]);
+          }
+        }
+      }
+    }
+  }
+
+  // Place bombs on random LOGICAL cells (not start, end, or on the main path)
   if (bombCount > 0) {
     const candidates: [number, number][] = [];
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
         if (r === 0 && c === 0) continue;
         if (r === rows - 1 && c === cols - 1) continue;
+        if (path.has(`${r},${c}`)) continue; // Keep solution path clear
         candidates.push([r, c]);
       }
     }
