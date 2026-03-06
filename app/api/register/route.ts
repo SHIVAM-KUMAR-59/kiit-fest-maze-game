@@ -39,7 +39,7 @@ export async function POST(req: Request) {
 
     if (!isValidKfid) {
       return NextResponse.json(
-        { success: false, message: "You have not registered." },
+        { success: false, message: "Invalid KFID. You have not registered." },
         { status: 403 }
       );
     }
