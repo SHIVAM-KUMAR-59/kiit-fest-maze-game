@@ -4,9 +4,9 @@ import Link from "next/link";
 export function Header() {
   return (
     <header className="w-full border-b border-border/40 bg-background/80 backdrop-blur-sm">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-center px-4 py-3 sm:justify-between">
+      <div className="mx-auto flex w-full max-w-5xl items-center justify-center px-4 mt-2 py-3 sm:justify-between">
         <Image
-          src="/maze-run-logo.png"
+          src="/KIIT-logo-HD.png"
           alt="KIIT Fest"
           width={140}
           height={46}
