@@ -14,85 +14,65 @@ function LeaderboardContent() {
   const userId = searchParams.get("userId");
   const playerName = searchParams.get("name") ?? "";
   const playerEmail = searchParams.get("email") ?? "";
+  const playerScore = Number(searchParams.get("score") ?? 0);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
-    if (!userId) {
-      router.replace("/");
-      return;
-    }
-  }, [router, userId]);
+  async function fetchLeaderboard() {
+    try {
+      const res = await fetch("/api/leaderboard", { cache: "no-store" });
+      const data = await res.json();
 
-  const playerScore = Number(searchParams.get("score") ?? 0);
+      if (data.success && Array.isArray(data.data)) {
+        const mapped: LeaderboardEntry[] = data.data.map(
+          (e: {
+            rank: number;
+            name: string;
+            email: string;
+            score: number;
+            attempts: number;
+            userId: string;
+          }) => ({
+            rank: e.rank,
+            name: e.name,
+            email: e.email,
+            score: e.score,
+            attempts: e.attempts,
+            isPlayer: e.userId === userId,
+          }),
+        );
 
-  // Fetch leaderboard from API
-  useEffect(() => {
-    async function fetchLeaderboard() {
-      try {
-        const res = await fetch("/api/leaderboard");
-        const data = await res.json();
-
-        if (data.success && Array.isArray(data.data)) {
-          // Mark the current player
-          const mapped: LeaderboardEntry[] = data.data.map(
-            (e: {
-              rank: number;
-              name: string;
-              email: string;
-              score: number;
-              attempts: number;
-              userId: string;
-            }) => ({
-              rank: e.rank,
-              name: e.name,
-              email: e.email,
-              score: e.score,
-              attempts: e.attempts,
-              isPlayer: e.userId === userId,
-            }),
-          );
-
-          // If the current player isn't in the DB results yet (score not yet aggregated),
-          // add them manually using the ?score= param
-          const hasPlayer = mapped.some((e) => e.isPlayer);
-          if (!hasPlayer && userId && playerScore > 0) {
-            mapped.push({
-              rank: 0,
-              name: playerName,
-              email: playerEmail,
-              score: playerScore,
-              isPlayer: true,
-            });
-            // Re-sort and re-rank
-            mapped.sort((a, b) => b.score - a.score);
-            mapped.forEach((e, i) => (e.rank = i + 1));
-          }
-
-          setEntries(mapped);
+        // If the current player isn't in the DB results yet, add manually
+        const hasPlayer = mapped.some((e) => e.isPlayer);
+        if (!hasPlayer && userId && playerScore > 0) {
+          mapped.push({
+            rank: 0,
+            name: playerName,
+            email: playerEmail,
+            score: playerScore,
+            isPlayer: true,
+          });
+          mapped.sort((a, b) => b.score - a.score);
+          mapped.forEach((e, i) => (e.rank = i + 1));
         }
-      } catch {
-        // Fallback: show just the player
-        if (userId) {
-          setEntries([
-            {
-              rank: 1,
-              name: playerName,
-              email: playerEmail,
-              score: playerScore,
-              isPlayer: true,
-            },
-          ]);
-        }
-      } finally {
-        setLoading(false);
+
+        setEntries(mapped);
+        setLastUpdated(new Date());
       }
+    } catch {
+      // Keep existing entries on error — don't clear the display
+    } finally {
+      setLoading(false);
     }
+  }
 
+  // Initial fetch + 30-second auto-refresh
+  useEffect(() => {
     fetchLeaderboard();
-  }, [userId, playerScore]);
-
-  if (!userId) return null;
+    const interval = setInterval(fetchLeaderboard, 30_000);
+    return () => clearInterval(interval);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="flex flex-1 items-center justify-center bg-background px-4 py-8 sm:px-6">
@@ -110,7 +90,8 @@ function LeaderboardContent() {
           </div>
         : <LeaderboardScreen
             entries={entries}
-            onPlayAgain={() => router.push("/")}
+            lastUpdated={lastUpdated}
+            onPlayAgain={userId ? () => router.push("/") : undefined}
           />
         }
       </motion.div>

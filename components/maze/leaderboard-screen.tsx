@@ -53,11 +53,13 @@ export interface LeaderboardEntry {
 
 interface LeaderboardScreenProps {
   entries: LeaderboardEntry[];
-  onPlayAgain: () => void;
+  lastUpdated?: Date | null;
+  onPlayAgain?: () => void;
 }
 
 export function LeaderboardScreen({
   entries,
+  lastUpdated,
   onPlayAgain,
 }: Readonly<LeaderboardScreenProps>) {
   return (
@@ -150,12 +152,21 @@ export function LeaderboardScreen({
           </table>
         </div>
 
-        <Button
-          onClick={onPlayAgain}
-          className="w-full font-semibold tracking-wide sm:w-auto"
-        >
-          Play Again
-        </Button>
+        <div className="flex items-center justify-between gap-4 flex-wrap">
+          {onPlayAgain && (
+            <Button
+              onClick={onPlayAgain}
+              className="font-semibold tracking-wide"
+            >
+              Play Again
+            </Button>
+          )}
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground ml-auto">
+              Updated {lastUpdated.toLocaleTimeString()}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
