@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Card,
   CardContent,
@@ -64,6 +66,14 @@ export function LeaderboardScreen({
   countdown,
   onPlayAgain,
 }: Readonly<LeaderboardScreenProps>) {
+  const playerRowRef = useRef<HTMLTableRowElement>(null);
+
+  useEffect(() => {
+    playerRowRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [entries]);
   return (
     <Card className="w-full max-w-3xl border-border bg-card/90 shadow-sm animate-screen-fade">
       <CardHeader className="space-y-3">
@@ -79,79 +89,84 @@ export function LeaderboardScreen({
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="overflow-x-auto rounded-xl border border-border">
-          <table className="w-full min-w-[400px] border-collapse text-left text-sm">
-            <thead className="bg-muted/60 text-muted-foreground">
-              <tr>
-                <th className="px-4 py-3">Rank</th>
-                <th className="px-4 py-3">Player</th>
-                <th className="px-4 py-3 text-center">Attempts</th>
-                <th className="px-4 py-3 text-right">Best Score</th>
-              </tr>
-            </thead>
-            <tbody>
-              {entries.map((entry) => {
-                const medal = MEDALS[entry.rank];
-                return (
-                  <tr
-                    key={`${entry.rank}-${entry.name}`}
-                    className={[
-                      "border-t",
-                      medal ?
-                        `${medal.rowClass} ${medal.glow}`
-                      : "border-border",
-                      entry.isPlayer && !medal ? "bg-primary/10 font-bold" : "",
-                      entry.isPlayer && medal ?
-                        "ring-1 ring-inset ring-primary/40"
-                      : "",
-                    ]
-                      .filter(Boolean)
-                      .join(" ")}
-                  >
-                    <td
-                      className={`px-4 py-3 font-semibold ${medal ? medal.rankClass : "text-primary"}`}
+        <div className="rounded-xl border border-border overflow-hidden">
+          <ScrollArea className="h-[320px]">
+            <table className="w-full min-w-[400px] border-collapse text-left text-sm">
+              <thead className="sticky top-0 z-10 bg-muted/90 text-muted-foreground backdrop-blur-sm">
+                <tr>
+                  <th className="px-4 py-3">Rank</th>
+                  <th className="px-4 py-3">Player</th>
+                  <th className="px-4 py-3 text-center">Attempts</th>
+                  <th className="px-4 py-3 text-right">Best Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {entries.map((entry) => {
+                  const medal = MEDALS[entry.rank];
+                  return (
+                    <tr
+                      key={`${entry.rank}-${entry.name}`}
+                      ref={entry.isPlayer ? playerRowRef : undefined}
+                      className={[
+                        "border-t",
+                        medal ?
+                          `${medal.rowClass} ${medal.glow}`
+                        : "border-border",
+                        entry.isPlayer && !medal ?
+                          "bg-primary/10 font-bold"
+                        : "",
+                        entry.isPlayer && medal ?
+                          "ring-1 ring-inset ring-primary/40"
+                        : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ")}
                     >
-                      {medal ?
-                        <span className="flex items-center gap-1.5">
-                          <span className="text-base leading-none">
-                            {medal.emoji}
+                      <td
+                        className={`px-4 py-3 font-semibold ${medal ? medal.rankClass : "text-primary"}`}
+                      >
+                        {medal ?
+                          <span className="flex items-center gap-1.5">
+                            <span className="text-base leading-none">
+                              {medal.emoji}
+                            </span>
+                            <span className="tabular-nums">#{entry.rank}</span>
                           </span>
-                          <span className="tabular-nums">#{entry.rank}</span>
-                        </span>
-                      : `#${entry.rank}`}
-                    </td>
-                    <td
-                      className={`px-4 py-3 font-medium ${medal ? "text-foreground font-semibold" : "text-foreground"}`}
-                    >
-                      <div className="flex flex-col">
-                        <span>
-                          {entry.name}
-                          {entry.isPlayer && (
-                            <span className="ml-2 text-xs text-primary">
-                              (You)
+                        : `#${entry.rank}`}
+                      </td>
+                      <td
+                        className={`px-4 py-3 font-medium ${medal ? "text-foreground font-semibold" : "text-foreground"}`}
+                      >
+                        <div className="flex flex-col">
+                          <span>
+                            {entry.name}
+                            {entry.isPlayer && (
+                              <span className="ml-2 text-xs text-primary">
+                                (You)
+                              </span>
+                            )}
+                          </span>
+                          {entry.email && (
+                            <span className="text-xs text-muted-foreground font-normal">
+                              {entry.email}
                             </span>
                           )}
-                        </span>
-                        {entry.email && (
-                          <span className="text-xs text-muted-foreground font-normal">
-                            {entry.email}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">
-                      {entry.attempts ?? "—"}
-                    </td>
-                    <td
-                      className={`px-4 py-3 text-right font-mono font-bold ${medal?.rankClass ?? "text-secondary"}`}
-                    >
-                      {entry.score}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 text-center tabular-nums text-muted-foreground">
+                        {entry.attempts ?? "—"}
+                      </td>
+                      <td
+                        className={`px-4 py-3 text-right font-mono font-bold ${medal?.rankClass ?? "text-secondary"}`}
+                      >
+                        {entry.score}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </ScrollArea>
         </div>
 
         <div className="flex items-center justify-between gap-4 flex-wrap">
