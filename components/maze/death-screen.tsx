@@ -82,7 +82,10 @@ export function DeathScreen({
         </div>
 
         <Button
-          onClick={onFinish}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFinish();
+          }}
           className="inline-flex items-center gap-2 font-bold tracking-wide"
         >
           <Trophy className="size-4" /> View Leaderboard

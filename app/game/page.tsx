@@ -61,6 +61,7 @@ function GameContent() {
   const name = searchParams.get("name") ?? "";
   const email = searchParams.get("email") ?? "";
   const [ready, setReady] = useState(false);
+  const [activeDir, setActiveDir] = useState<Direction | null>(null);
   const [deathAlertOpen, setDeathAlertOpen] = useState(false);
   const [showDeathScreen, setShowDeathScreen] = useState(false);
   const prevScreen = useRef<string>("");
@@ -98,15 +99,24 @@ function GameContent() {
 
   // ── Keyboard controls ──────────────────────────────────────────────────────
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
+    const onDown = (e: KeyboardEvent) => {
       const dir = KEY_MAP[e.key];
       if (dir) {
         e.preventDefault();
+        setActiveDir(dir);
         move(dir);
       }
     };
-    globalThis.addEventListener("keydown", handler);
-    return () => globalThis.removeEventListener("keydown", handler);
+    const onUp = (e: KeyboardEvent) => {
+      const dir = KEY_MAP[e.key];
+      if (dir) setActiveDir((prev) => (prev === dir ? null : prev));
+    };
+    globalThis.addEventListener("keydown", onDown);
+    globalThis.addEventListener("keyup", onUp);
+    return () => {
+      globalThis.removeEventListener("keydown", onDown);
+      globalThis.removeEventListener("keyup", onUp);
+    };
   }, [move]);
 
   // ── Touch / swipe ──────────────────────────────────────────────────────────
@@ -224,6 +234,7 @@ function GameContent() {
               time={time}
               moves={moves}
               onMove={move}
+              activeDir={activeDir}
             />
           </motion.div>
         )}

@@ -85,14 +85,20 @@ export function WinScreen({
         <div className="flex flex-wrap justify-center gap-2.5">
           {isLastLevel ?
             <Button
-              onClick={onFinish}
+              onClick={(e) => {
+                e.stopPropagation();
+                onFinish();
+              }}
               className="inline-flex items-center gap-2 font-bold tracking-wide"
             >
               <Trophy className="size-4" /> View Leaderboard
             </Button>
           : <Button
               variant="secondary"
-              onClick={onNextLevel}
+              onClick={(e) => {
+                e.stopPropagation();
+                onNextLevel();
+              }}
               className="font-bold tracking-wide"
             >
               Next Level →
