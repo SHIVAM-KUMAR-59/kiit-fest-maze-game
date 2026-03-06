@@ -22,15 +22,13 @@ import {
 import { Input } from "@/components/ui/input";
 
 const formSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  email: z.string().email("Invalid email address"),
   kfid: z.string().min(1, "KFID is required"),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 interface RegistrationScreenProps {
-  onContinue: (name: string, email: string, kfid: string) => Promise<void>;
+  onContinue: (kfid: string) => Promise<void>;
   error?: string;
   loading?: boolean;
 }
@@ -43,18 +41,12 @@ export function RegistrationScreen({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      email: "",
       kfid: "",
     },
   });
 
   const onSubmit = async (values: FormValues) => {
-    await onContinue(
-      values.name.trim(),
-      values.email.trim(),
-      values.kfid.trim(),
-    );
+    await onContinue(values.kfid.trim());
   };
 
   return (
@@ -71,47 +63,6 @@ export function RegistrationScreen({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    Name
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter your name"
-                      className="h-11 rounded-lg"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[10px]" />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="space-y-1.5">
-                  <FormLabel className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                    Email
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter your email"
-                      type="email"
-                      className="h-11 rounded-lg"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-[10px]" />
-                </FormItem>
-              )}
-            />
-
             <FormField
               control={form.control}
               name="kfid"

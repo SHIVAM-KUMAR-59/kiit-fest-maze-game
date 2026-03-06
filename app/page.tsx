@@ -10,14 +10,14 @@ export default function RegisterPage() {
   const [regError, setRegError] = useState("");
   const [regLoading, setRegLoading] = useState(false);
 
-  const handleRegister = async (name: string, email: string, kfid: string) => {
+  const handleRegister = async (kfid: string) => {
     setRegError("");
     setRegLoading(true);
     try {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, kfid }),
+        body: JSON.stringify({ kfid }),
       });
       const data = await res.json();
 
@@ -27,6 +27,8 @@ export default function RegisterPage() {
       }
 
       const userId = data.data.id as string;
+      const name = data.data.name as string;
+      const email = data.data.email as string;
       const params = new URLSearchParams({ userId, name, email });
       // 200 = returning user ("Welcome back!") — skip rules, go straight to game
       // 201 = new user — show rules first
