@@ -54,12 +54,14 @@ export interface LeaderboardEntry {
 interface LeaderboardScreenProps {
   entries: LeaderboardEntry[];
   lastUpdated?: Date | null;
+  countdown?: number;
   onPlayAgain?: () => void;
 }
 
 export function LeaderboardScreen({
   entries,
   lastUpdated,
+  countdown,
   onPlayAgain,
 }: Readonly<LeaderboardScreenProps>) {
   return (
@@ -161,11 +163,25 @@ export function LeaderboardScreen({
               Play Again
             </Button>
           )}
-          {lastUpdated && (
-            <p className="text-xs text-muted-foreground ml-auto">
-              Updated {lastUpdated.toLocaleTimeString()}
-            </p>
-          )}
+          <div className="ml-auto flex flex-col items-end gap-0.5">
+            {lastUpdated && (
+              <p className="text-xs text-muted-foreground">
+                Updated {lastUpdated.toLocaleTimeString()}
+              </p>
+            )}
+            {countdown !== undefined && (
+              <p className="text-xs text-muted-foreground">
+                Refreshing in{" "}
+                <span
+                  className={`font-mono font-semibold tabular-nums ${
+                    countdown <= 5 ? "text-secondary" : "text-accent"
+                  }`}
+                >
+                  {countdown}s
+                </span>
+              </p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -18,6 +18,7 @@ function LeaderboardContent() {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState(30);
 
   async function fetchLeaderboard() {
     try {
@@ -59,6 +60,7 @@ function LeaderboardContent() {
 
         setEntries(mapped);
         setLastUpdated(new Date());
+        setCountdown(30);
       }
     } catch {
       // Keep existing entries on error — don't clear the display
@@ -67,11 +69,18 @@ function LeaderboardContent() {
     }
   }
 
-  // Initial fetch + 30-second auto-refresh
+  // Initial fetch + 30-second auto-refresh + 1-second countdown tick
   useEffect(() => {
     fetchLeaderboard();
     const interval = setInterval(fetchLeaderboard, 30_000);
-    return () => clearInterval(interval);
+    const tick = setInterval(
+      () => setCountdown((c) => Math.max(0, c - 1)),
+      1_000,
+    );
+    return () => {
+      clearInterval(interval);
+      clearInterval(tick);
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
@@ -91,6 +100,7 @@ function LeaderboardContent() {
         : <LeaderboardScreen
             entries={entries}
             lastUpdated={lastUpdated}
+            countdown={countdown}
             onPlayAgain={userId ? () => router.push("/") : undefined}
           />
         }
