@@ -41,7 +41,7 @@ A competitive, browser-based maze game built for KIIT Fest. Navigate fog-covered
 
 - **Fog of War** — only nearby cells revealed as you explore
 - **Hidden Bombs** — instant game over on contact
-- ⏱**Timed Levels** — per-level time limits with ★ to ★★★ star ratings
+- **Timed Levels** — per-level time limits with ★ to ★★★ star ratings
 - **Global Leaderboard** — ranked by total score across all 3 levels
 - **User Auth** — register, login, and track your personal best
 - **Unlimited Replays** — only your best run counts
