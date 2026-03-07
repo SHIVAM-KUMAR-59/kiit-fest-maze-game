@@ -18,10 +18,10 @@ export async function GET() {
       if (pts > prev) bestMap.set(s.userId, pts);
     }
 
-    // Sort the users by their best score desc and take top 50
+    // Sort the users by their best score desc and take top 1000
     const sorted = Array.from(bestMap.entries())
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 50);
+      .slice(0, 1000);
 
     const userIds = sorted.map(([userId]) => userId);
 
