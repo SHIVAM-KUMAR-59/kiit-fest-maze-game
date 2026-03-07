@@ -1,3 +1,5 @@
+![Banner](/banner.png)
+
 # KIIT Fest Maze Game
 
 > Navigate the unknown. Dodge the danger. Race the clock.
